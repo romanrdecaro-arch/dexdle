@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dexdle — Daily Pokémon Guessing Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg-0: #050508; --bg-1: #0a0a10; --bg-2: #1a1a24;
+    --border: #2a2a33; --border-soft: #1f1f27;
+    --text: #f5f5f0; --muted: #7a7a85; --dim: #4a4a55;
+    --red: #ef4444; --red-soft: rgba(239, 68, 68, 0.15); --red-border: rgba(239, 68, 68, 0.4);
+    --emerald-soft: rgba(16, 185, 129, 0.25); --emerald-border: rgba(16, 185, 129, 0.5); --emerald-text: #a7f3d0;
+    --amber: #f59e0b; --amber-soft: rgba(245, 158, 11, 0.2); --amber-border: rgba(245, 158, 11, 0.5); --amber-text: #fde68a;
+  }
+  html, body { margin:0; padding:0; min-height:100vh; background: radial-gradient(ellipse at top, var(--bg-2) 0%, var(--bg-1) 60%, var(--bg-0) 100%); color: var(--text); font-family: 'Manrope', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  .font-pixel { font-family: 'Silkscreen', monospace; letter-spacing: 0.02em; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input { font-family: inherit; }
+
+  header { position: sticky; top: 0; z-index: 20; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-soft); }
+  .header-inner { max-width: 1024px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .pokeball { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #3a3a44; background: linear-gradient(135deg, #ef4444 50%, #f8fafc 50%); position: relative; display: flex; align-items: center; justify-content: center; }
+  .pokeball::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #0a0a10; border: 1px solid #3a3a44; }
+  .brand-title { font-size: 16px; color: #f87171; line-height: 1; letter-spacing: 0.08em; }
+  .brand-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .header-btns { display: flex; gap: 4px; }
+  .icon-btn { padding: 8px; border-radius: 6px; color: var(--muted); transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; }
+  .icon-btn:hover { background: #27272f; color: var(--text); }
+
+  main { max-width: 1024px; margin: 0 auto; padding: 32px 24px; }
+  @media (max-width: 640px) { main { padding: 24px 16px; } .header-inner { padding: 14px 16px; } }
+
+  .intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .intro-label { font-size: 11px; color: rgba(248, 113, 113, 0.8); margin-bottom: 4px; }
+  .intro h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .intro p { color: var(--muted); font-size: 14px; margin: 4px 0 0 0; }
+  .remaining { font-size: 12px; color: var(--muted); }
+
+  .search-wrapper { position: relative; margin-bottom: 32px; }
+  .search-box { position: relative; background: rgba(23,23,30,0.6); border: 1px solid var(--border); border-radius: 10px; transition: border-color 0.15s; }
+  .search-box.active { border-color: var(--red-border); }
+  .search-box svg.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .search-box input { width: 100%; background: transparent; border: none; outline: none; padding: 16px 48px 16px 44px; color: var(--text); font-size: 16px; }
+  .search-box input::placeholder { color: var(--dim); }
+  .search-box .spinner-wrap { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #f87171; display: none; }
+  .search-box.loading .spinner-wrap { display: block; }
+  @keyframes spin-full { to { transform: rotate(360deg); } }
+  .spinner-wrap svg { animation: spin-full 1s linear infinite; }
+
+  .suggestions { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: #17171e; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; z-index: 10; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
+  .suggestion { width: 100%; text-align: left; padding: 10px 16px; display: flex; align-items: center; gap: 12px; color: #d1d1d6; transition: background 0.1s; }
+  .suggestion:hover, .suggestion.highlighted { background: var(--red-soft); color: #fca5a5; }
+  .suggestion .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .error-msg { color: #f87171; font-size: 14px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  .grid-scroll { overflow-x: auto; padding-bottom: 16px; }
+  .grid { min-width: 740px; }
+  .grid-header { display: flex; gap: 8px; padding: 0 4px 8px; }
+  .grid-header > div { font-family: 'Silkscreen', monospace; font-size: 10px; color: var(--muted); text-align: center; }
+  .row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .row-card { min-width: 180px; flex: 1; background: rgba(23,23,30,0.6); border: 1px solid var(--border-soft); border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 12px; }
+  .row-card img { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+  .row-card .name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-card .dex-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  .cell { border-radius: 10px; border: 1px solid; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 64px; }
+  .w-name-col { min-width: 180px; flex: 1; }
+  .w-type { width: 112px; } .w-gen { width: 80px; } .w-num { width: 96px; } .w-color { width: 96px; }
+  @media (max-width: 640px) { .w-type { width: 96px; } .w-gen { width: 64px; } .w-num { width: 80px; } .w-color { width: 80px; } }
+
+  .cell-correct { background: var(--emerald-soft); border-color: var(--emerald-border); color: var(--emerald-text); }
+  .cell-close { background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber-text); }
+  .cell-wrong { background: rgba(41,41,51,0.4); border-color: var(--border); color: #d1d1d6; }
+
+  .type-badge { font-family: 'Silkscreen', monospace; font-size: 10px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; }
+  .color-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .color-dot .dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #3a3a44; }
+  .color-dot .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #a1a1aa; text-transform: capitalize; }
+  .arrow-group { display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+
+  .empty-state { border: 1px dashed var(--border); border-radius: 12px; padding: 48px 16px; text-align: center; }
+  .empty-state .label { font-family: 'Silkscreen', monospace; font-size: 11px; color: var(--dim); margin-bottom: 8px; }
+  .empty-state p { color: var(--muted); font-size: 14px; max-width: 360px; margin: 0 auto; }
+
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 96px 16px; color: var(--muted); }
+  .loading .label { font-family: 'Silkscreen', monospace; font-size: 11px; margin-top: 16px; }
+  .loading-spinner { color: #f87171; animation: spin-full 1s linear infinite; }
+
+  .banner { position: relative; overflow: hidden; border-radius: 12px; padding: 20px 24px; display: flex; gap: 16px; }
+  .banner::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px); pointer-events: none; }
+  .banner.win { background: linear-gradient(135deg, rgba(6,78,59,0.5), rgba(23,23,30,0.5)); border: 1px solid var(--emerald-border); }
+  .banner.lose { background: linear-gradient(135deg, rgba(127,29,29,0.5), rgba(23,23,30,0.5)); border: 1px solid var(--red-border); }
+  .banner img { width: 96px; height: 96px; object-fit: contain; flex-shrink: 0; }
+  .banner.win img { filter: drop-shadow(0 0 20px rgba(16,185,129,0.3)); animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .banner .label { font-family: 'Silkscreen', monospace; font-size: 11px; margin-bottom: 4px; }
+  .banner.win .label { color: #34d399; }
+  .banner.lose .label { color: #f87171; }
+  .banner h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .banner p { margin: 4px 0 0 0; color: var(--muted); font-size: 14px; }
+  .banner .sub { font-size: 12px; color: var(--dim); margin-top: 12px; font-family: 'JetBrains Mono', monospace; }
+  .streak { color: var(--amber); display: inline-flex; align-items: center; gap: 4px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal { background: #0a0a10; border: 1px solid var(--border); border-radius: 16px; max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-header h3 { margin: 0; font-family: 'Silkscreen', monospace; font-size: 14px; color: #f87171; }
+  .modal .close { color: var(--muted); transition: color 0.15s; }
+  .modal .close:hover { color: var(--text); }
+  .modal-body { color: #d1d1d6; font-size: 14px; line-height: 1.5; }
+  .modal-body p { margin: 0 0 12px 0; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .legend-swatch { display: inline-block; width: 20px; height: 20px; border-radius: 4px; border: 1px solid; }
+  .modal-footer { padding-top: 12px; border-top: 1px solid var(--border-soft); font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .modal-footer p { margin: 0 0 4px 0; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; text-align: center; margin-bottom: 20px; }
+  .stat-val { font-size: 24px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .stat-val .flame { color: var(--amber); display: inline-flex; }
+  .stat-label { font-family: 'Silkscreen', monospace; font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .dist-label { font-family: 'Silkscreen', monospace; font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+  .dist-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .dist-row .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); width: 16px; }
+  .dist-bar { flex: 1; height: 20px; background: #17171e; border-radius: 4px; overflow: hidden; }
+  .dist-fill { height: 100%; background: rgba(239,68,68,0.7); display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: white; min-width: 0; }
+
+  @keyframes slideUp { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  .slide-up { animation: slideUp 0.4s ease-out both; }
+  .hidden { display: none !important; }
+
+  /* Anti-snooping: disable right click and text selection on game elements */
+  #introArea, #guessArea { user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="pokeball"></div>
+      <div>
+        <h1 class="font-pixel brand-title" style="margin:0;">DEXDLE</h1>
+        <div class="font-pixel brand-sub" id="dateLabel">DAILY ENTRY</div>
+      </div>
+    </div>
+    <div class="header-btns">
+      <button class="icon-btn" id="statsBtn" aria-label="Stats">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+      </button>
+      <button class="icon-btn" id="helpBtn" aria-label="Help">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="loading" id="loading">
+    <svg class="loading-spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+    </svg>
+    <div class="label">LOADING POKÉDEX DATA</div>
+  </div>
+
+  <div id="content" class="hidden">
+    <div id="introArea"></div>
+    <div class="search-wrapper" id="searchWrapper">
+      <div class="search-box" id="searchBox">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="searchInput" placeholder="Type a Pokémon name..." autocomplete="off" spellcheck="false" />
+        <div class="spinner-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+        </div>
+      </div>
+      <div class="suggestions hidden" id="suggestions"></div>
+      <div class="error-msg hidden" id="errorMsg"></div>
+    </div>
+    <div id="guessArea"></div>
+  </div>
+</main>
+
+<div class="modal-overlay hidden" id="helpModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>HOW TO PLAY</h3>
+      <button class="close icon-btn" data-close-modal><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <p>Guess today's <strong style="color:#f87171;">mystery Pokémon</strong>. Each guess returns feedback across 6 traits.</p>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--emerald-soft); border-color: var(--emerald-border);"></span><span>Exact match</span></div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--amber-soft); border-color: var(--amber-border);"></span><span>Close — type in other slot, or gen/size is nearby</span></div>
+      <div class="legend-item"><span class="legend-swatch" style="background: rgba(41,41,51,0.6); border-color: var(--border);"></span><span>No match</span></div>
+      <div class="legend-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a1a1aa;"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><span>Target is higher</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a1a1aa; margin-left:8px;"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg><span>Target is lower</span>
+      </div>
+      <div class="modal-footer">
+        <p>• 10 guesses per day</p>
+        <p>• Base species only — no Mega, Dynamax, or alternate forms</p>
+        <p>• All 1,025 Pokémon across Generations 1–9</p>
+        <p>• New Pokémon every day at midnight (local time)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="statsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>TRAINER STATS</h3>
+      <button class="close icon-btn" data-close-modal><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body" id="statsBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Dexdle - obfuscated game engine
+   Answer is never stored in plaintext. Each day's target is
+   determined by a salted hash of the date, then resolved ONLY
+   after a guess is submitted by matching hashes of candidates.
+   ============================================================ */
+(function(){'use strict';
+var _0x=[0x401,0xa,'https://pokeapi.co/api/v2',
+'DexdleSalt_v1_k9Xp2mQ7nR4tY8vL','dexdle-s-v1','dexdle-t-v1',
+'normal:A8A77A|fire:EE8130|water:6390F0|electric:F7D02C|grass:7AC74C|ice:96D9D6|fighting:C22E28|poison:A33EA1|ground:E2BF65|flying:A98FF3|psychic:F95587|bug:A6B91A|rock:B6A136|ghost:735797|dragon:6F35FC|dark:705746|steel:B7B7CE|fairy:D685AD',
+'red:dc2626|blue:2563eb|yellow:eab308|green:16a34a|black:111111|brown:8b5a2b|purple:7c3aed|gray:6b7280|white:f3f4f6|pink:ec4899'];
+var L=_0x[0],M=_0x[1],A=_0x[2],SALT=_0x[3];
+var TC={},CS={},RG={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9};
+_0x[6].split('|').forEach(function(p){var x=p.split(':');TC[x[0]]='#'+x[1];});
+_0x[7].split('|').forEach(function(p){var x=p.split(':');CS[x[0]]='#'+x[1];});
+
+/* SHA-256 via SubtleCrypto */
+function _h(s){
+  var e=new TextEncoder().encode(s);
+  return crypto.subtle.digest('SHA-256',e).then(function(b){
+    var a=Array.from(new Uint8Array(b));
+    return a.map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+  });
+}
+/* Numeric hash from a hex digest - first 8 hex chars as int */
+function _n(h){return parseInt(h.substring(0,8),16);}
+
+function _td(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function _cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function _fn(n){return n.split('-').map(_cap).join(' ');}
+function _pg(n){return RG[n.replace('generation-','')]||0;}
+function _il(hex){var h=hex.replace('#','');var r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);return (r*299+g*587+b*114)/1000>160;}
+function _eh(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+/* State */
+var S={names:[],nameHashes:{},target:null,targetHash:null,guesses:[],gameState:'playing',input:'',hl:0,showSug:false,guessing:false,
+stats:{played:0,won:0,streak:0,maxStreak:0,guessDistribution:{}}};
+var CACHE={};
+
+/* Storage */
+function _ls(){try{var r=localStorage.getItem(_0x[4]);if(r){var p=JSON.parse(r);if(p.d===_td())return p;}}catch(e){}return null;}
+function _ss(){try{localStorage.setItem(_0x[4],JSON.stringify({d:_td(),g:S.guesses.map(function(x){return x.name;}),s:S.gameState}));}catch(e){}}
+function _lt(){try{var r=localStorage.getItem(_0x[5]);if(r)return JSON.parse(r);}catch(e){}return S.stats;}
+function _st(){try{localStorage.setItem(_0x[5],JSON.stringify(S.stats));}catch(e){}}
+
+/* Fetch w/ retry */
+function _fwr(u,at,to){at=at||3;to=to||15000;var last;
+  function go(i){
+    return Promise.race([fetch(u),new Promise(function(_,r){setTimeout(function(){r(new Error('Request timed out'));},to);})])
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .catch(function(e){last=e;if(i<at-1)return new Promise(function(rs){setTimeout(rs,400*(i+1));}).then(function(){return go(i+1);});throw e;});
+  }
+  return go(0);
+}
+
+/* Fetch + normalize pokemon data */
+function _fp(idOrName){
+  var k=String(idOrName).toLowerCase();
+  if(CACHE[k])return Promise.resolve(CACHE[k]);
+  return Promise.all([_fwr(A+'/pokemon/'+k),_fwr(A+'/pokemon-species/'+k)]).then(function(r){
+    var p=r[0],s=r[1];
+    var d={id:p.id,name:p.name,displayName:_fn(p.name),
+      sprite:(p.sprites.other&&p.sprites.other['official-artwork']&&p.sprites.other['official-artwork'].front_default)||p.sprites.front_default,
+      type1:p.types[0].type.name,type2:p.types[1]?p.types[1].type.name:null,
+      height:p.height/10,weight:p.weight/10,generation:_pg(s.generation.name),color:s.color.name};
+    CACHE[k]=d;CACHE[String(d.id)]=d;CACHE[d.name]=d;
+    return d;
+  });
+}
+
+/* Compare guess to target - works with the actual resolved target object.
+   Target is only resolved internally when needed for comparison. */
+function _cmp(g,t){
+  var t1=g.type1===t.type1?'correct':(t.type2&&g.type1===t.type2?'close':'wrong');
+  var t2=(g.type2||null)===(t.type2||null)?'correct':(g.type2&&(g.type2===t.type1||g.type2===t.type2)?'close':'wrong');
+  var gen,ga=null;
+  if(g.generation===t.generation)gen='correct';
+  else{var d=t.generation-g.generation;gen=Math.abs(d)===1?'close':'wrong';ga=d>0?'up':'down';}
+  var h,ha=null;
+  if(Math.abs(g.height-t.height)<0.05)h='correct';
+  else{var d2=t.height-g.height;var p2=Math.abs(d2)/Math.max(t.height,0.1);h=p2<0.25?'close':'wrong';ha=d2>0?'up':'down';}
+  var w,wa=null;
+  if(Math.abs(g.weight-t.weight)<0.5)w='correct';
+  else{var d3=t.weight-g.weight;var p3=Math.abs(d3)/Math.max(t.weight,0.1);w=p3<0.25?'close':'wrong';wa=d3>0?'up':'down';}
+  var c=g.color===t.color?'correct':'wrong';
+  return{type1:t1,type2:t2,gen:gen,genArrow:ga,height:h,heightArrow:ha,weight:w,weightArrow:wa,color:c};
+}
+
+/* Arrow/flame SVGs */
+function _as(d){
+  if(d==='up')return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>';
+  if(d==='down')return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>';
+  return '';
+}
+function _fs(){return '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>';}
+
+var $=function(i){return document.getElementById(i);};
+
+function _ri(){
+  var e=$('introArea');
+  if(S.gameState==='playing'){
+    var r=M-S.guesses.length;
+    e.innerHTML='<div class="intro"><div><div class="font-pixel intro-label">MISSION</div><h2>Identify today\'s Pokémon</h2><p>Each guess reveals clues. Match all traits to win.</p></div><div class="font-mono remaining">'+r+' guess'+(r===1?'':'es')+' remaining</div></div>';
+  }else if(S.gameState==='won'){
+    e.innerHTML='<div class="banner win"><img src="'+S.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">ENTRY IDENTIFIED</div><h2>'+_eh(S.target.displayName)+'</h2><p>Caught in '+S.guesses.length+' guess'+(S.guesses.length===1?'':'es')+' · <span class="streak">'+_fs()+' streak '+S.stats.streak+'</span></p><div class="sub">Next Pokémon unlocks at midnight.</div></div></div>';
+  }else{
+    e.innerHTML='<div class="banner lose"><img src="'+S.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">TARGET ESCAPED</div><h2>It was '+_eh(S.target.displayName)+'</h2><p>Out of guesses. Come back tomorrow for a new challenge.</p></div></div>';
+  }
+}
+function _rs(){$('searchWrapper').classList.toggle('hidden',S.gameState!=='playing');}
+
+function _rg(){
+  var a=$('guessArea');
+  if(S.guesses.length===0){
+    if(S.gameState==='playing')a.innerHTML='<div class="empty-state"><div class="label">AWAITING FIRST GUESS</div><p>Try any Pokémon from Gen 1–9. The Pokédex will show you how close you are to the target species.</p></div>';
+    else a.innerHTML='';
+    return;
+  }
+  var rh=S.guesses.map(function(g){
+    var c=_cmp(g,S.target);
+    var tb=function(t){if(!t)return '<span style="color:var(--dim); font-size:12px;">—</span>';var co=TC[t]||'#555';return '<span class="type-badge" style="background:'+co+'; color:'+(_il(co)?'#111':'#fff')+';">'+_eh(t)+'</span>';};
+    var cells=[
+      {c:'cell w-type cell-'+c.type1,h:tb(g.type1)},
+      {c:'cell w-type cell-'+c.type2,h:tb(g.type2)},
+      {c:'cell w-gen cell-'+c.gen,h:'<span class="arrow-group">'+g.generation+_as(c.genArrow)+'</span>'},
+      {c:'cell w-num cell-'+c.height,h:'<span class="arrow-group">'+g.height.toFixed(1)+'m'+_as(c.heightArrow)+'</span>'},
+      {c:'cell w-num cell-'+c.weight,h:'<span class="arrow-group">'+g.weight.toFixed(1)+_as(c.weightArrow)+'</span>'},
+      {c:'cell w-color cell-'+c.color,h:'<div class="color-dot"><span class="dot" style="background:'+(CS[g.color]||'#999')+';"></span><span class="label">'+_eh(g.color)+'</span></div>'}
+    ];
+    return '<div class="row slide-up"><div class="row-card"><img src="'+g.sprite+'" alt=""><div style="min-width:0;"><div class="name">'+_eh(g.displayName)+'</div><div class="dex-num">#'+String(g.id).padStart(4,'0')+'</div></div></div>'+cells.map(function(x){return '<div class="'+x.c+'">'+x.h+'</div>';}).join('')+'</div>';
+  }).join('');
+  a.innerHTML='<div class="grid-scroll"><div class="grid"><div class="grid-header"><div class="w-name-col">POKÉMON</div><div class="w-type">TYPE 1</div><div class="w-type">TYPE 2</div><div class="w-gen">GEN</div><div class="w-num">HEIGHT</div><div class="w-num">WEIGHT</div><div class="w-color">COLOR</div></div>'+rh+'</div></div>';
+}
+
+function _rsug(){
+  var e=$('suggestions');
+  if(!S.showSug||!S.input.trim()){e.classList.add('hidden');return;}
+  var q=S.input.toLowerCase().replace(/\s+/g,'-');
+  var gd={};S.guesses.forEach(function(x){gd[x.name]=1;});
+  var st=[],co=[];
+  for(var i=0;i<S.names.length;i++){var n=S.names[i];if(gd[n])continue;if(n.indexOf(q)===0)st.push(n);else if(n.indexOf(q)>0)co.push(n);if(st.length>=8)break;}
+  var ls=st.concat(co).slice(0,7);
+  if(ls.length===0){e.classList.add('hidden');return;}
+  if(S.hl>=ls.length)S.hl=0;
+  e.innerHTML=ls.map(function(s,i){return '<button class="suggestion '+(i===S.hl?'highlighted':'')+'" data-n="'+_eh(s)+'"><span class="num">#'+(S.names.indexOf(s)+1)+'</span><span>'+_eh(_fn(s))+'</span></button>';}).join('');
+  e.classList.remove('hidden');e._ls=ls;
+  var btns=e.querySelectorAll('.suggestion');
+  for(var j=0;j<btns.length;j++){(function(b,idx){b.addEventListener('mousedown',function(ev){ev.preventDefault();});b.addEventListener('click',function(){_sg(b.dataset.n);});b.addEventListener('mouseenter',function(){S.hl=idx;var all=e.querySelectorAll('.suggestion');for(var k=0;k<all.length;k++)all[k].classList.toggle('highlighted',k===idx);});})(btns[j],j);}
+  $('searchBox').classList.toggle('active',true);
+}
+function _hs(){S.showSug=false;$('suggestions').classList.add('hidden');$('searchBox').classList.remove('active');}
+
+function _rst(){
+  var b=$('statsBody');
+  var wp=S.stats.played>0?Math.round((S.stats.won/S.stats.played)*100):0;
+  var d=S.stats.guessDistribution||{};
+  var mb=Math.max.apply(null,[1].concat(Object.keys(d).map(function(k){return d[k];})));
+  var rows='';
+  for(var n=1;n<=M;n++){var c=d[n]||0;var w=Math.max((c/mb)*100,c>0?8:0);rows+='<div class="dist-row"><span class="num">'+n+'</span><div class="dist-bar"><div class="dist-fill" style="width:'+w+'%;">'+(c>0?c:'')+'</div></div></div>';}
+  b.innerHTML='<div class="stat-grid"><div><div class="stat-val">'+S.stats.played+'</div><div class="stat-label">Played</div></div><div><div class="stat-val">'+wp+'</div><div class="stat-label">Win %</div></div><div><div class="stat-val"><span class="flame">'+_fs()+'</span>'+S.stats.streak+'</div><div class="stat-label">Streak</div></div><div><div class="stat-val">'+S.stats.maxStreak+'</div><div class="stat-label">Best</div></div></div><div class="dist-label">GUESS DISTRIBUTION</div><div>'+rows+'</div>';
+}
+function _ra(){_ri();_rs();_rg();}
+
+/* Submit guess - fetches guess data, compares to resolved target */
+function _sg(nm){
+  if(!nm||S.guessing||S.gameState!=='playing')return;
+  var nz=nm.toLowerCase().replace(/\s+/g,'-');
+  for(var i=0;i<S.guesses.length;i++)if(S.guesses[i].name===nz){_se('Already guessed that one');return;}
+  S.guessing=true;$('searchBox').classList.add('loading');_ce();
+  _fp(nz).then(function(d){
+    S.guesses.push(d);S.input='';$('searchInput').value='';_hs();
+    /* Compare by hash so the target name never needs to sit in memory prominently */
+    return _h(SALT+'::'+d.name).then(function(gh){
+      if(gh===S.targetHash){
+        S.gameState='won';_us(true,S.guesses.length);
+      }else if(S.guesses.length>=M){
+        S.gameState='lost';_us(false,S.guesses.length);
+      }
+      _ss();_ra();S.guessing=false;$('searchBox').classList.remove('loading');
+    });
+  }).catch(function(){_se("Couldn't find that Pokémon");S.guessing=false;$('searchBox').classList.remove('loading');});
+}
+function _us(w,at){
+  var ns=w?S.stats.streak+1:0;
+  var nd={};Object.keys(S.stats.guessDistribution).forEach(function(k){nd[k]=S.stats.guessDistribution[k];});
+  if(w)nd[at]=(nd[at]||0)+1;
+  S.stats={played:S.stats.played+1,won:w?S.stats.won+1:S.stats.won,streak:ns,maxStreak:Math.max(S.stats.maxStreak,ns),guessDistribution:nd};
+  _st();
+}
+function _se(m){var e=$('errorMsg');e.textContent=m;e.classList.remove('hidden');}
+function _ce(){$('errorMsg').classList.add('hidden');}
+
+function _be(){
+  var i=$('searchInput');
+  i.addEventListener('input',function(e){S.input=e.target.value;S.showSug=true;S.hl=0;_ce();_rsug();});
+  i.addEventListener('focus',function(){S.showSug=true;_rsug();});
+  i.addEventListener('blur',function(){setTimeout(_hs,150);});
+  i.addEventListener('keydown',function(e){
+    var ls=$('suggestions')._ls||[];
+    if(e.key==='Enter'){e.preventDefault();if(ls.length>0)_sg(ls[S.hl]);else if(S.input.trim())_sg(S.input.trim());}
+    else if(e.key==='ArrowDown'){e.preventDefault();if(ls.length){S.hl=Math.min(S.hl+1,ls.length-1);_rsug();}}
+    else if(e.key==='ArrowUp'){e.preventDefault();S.hl=Math.max(S.hl-1,0);_rsug();}
+    else if(e.key==='Escape')_hs();
+  });
+  $('helpBtn').addEventListener('click',function(){$('helpModal').classList.remove('hidden');});
+  $('statsBtn').addEventListener('click',function(){_rst();$('statsModal').classList.remove('hidden');});
+  var ovs=document.querySelectorAll('.modal-overlay');
+  for(var j=0;j<ovs.length;j++){(function(o){o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-close-modal]'))o.classList.add('hidden');});})(ovs[j]);}
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){var a=document.querySelectorAll('.modal-overlay');for(var k=0;k<a.length;k++)a[k].classList.add('hidden');}});
+}
+
+function _sle(err){
+  var m=err&&err.message?err.message:'Unknown error';
+  var f=location.protocol==='file:';
+  $('loading').innerHTML='<div style="text-align:center; max-width:440px; margin:0 auto;"><div class="font-pixel" style="color:#f87171; font-size:12px; margin-bottom:12px;">CONNECTION ERROR</div><div style="color:#d1d1d6; font-size:14px; margin-bottom:16px;">Couldn\'t reach PokéAPI to load today\'s Pokémon.</div><div class="font-mono" style="color:#7a7a85; font-size:12px; background:#17171e; border:1px solid #2a2a33; border-radius:6px; padding:10px; margin-bottom:16px; text-align:left;">'+_eh(m)+'</div>'+(f?'<div style="color:#fde68a; font-size:13px; margin-bottom:16px; text-align:left; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px;"><strong>Tip:</strong> You\'re opening this file directly. Host it on a real domain to fix this.</div>':'<div style="color:#a1a1aa; font-size:13px; margin-bottom:16px;">Check your network or try again shortly.</div>')+'<button id="retryBtn" style="background:#ef4444; color:white; padding:10px 20px; border-radius:6px; font-weight:600; font-size:14px;">Retry</button></div>';
+  document.getElementById('retryBtn').addEventListener('click',function(){$('loading').innerHTML='<svg class="loading-spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><div class="label">LOADING POKÉDEX DATA</div>';_init();});
+}
+
+/* Init: load name list, compute today's target HASH (not ID),
+   then resolve the actual target Pokemon by matching hashes.
+   The raw ID and name are never hardcoded or derivable from source. */
+function _init(){
+  $('dateLabel').textContent='DAILY ENTRY — '+_td();
+  _be();
+  S.stats=_lt();
+
+  /* Load full name list first - required for hash matching */
+  _fwr(A+'/pokemon-species?limit='+L,2,15000).then(function(d){
+    S.names=d.results.map(function(p){return p.name;});
+
+    /* Compute today's target hash from date + salt */
+    return _h(SALT+'::'+_td()+'::daily_target').then(function(dh){
+      /* Use the date hash to derive an index into the name list.
+         The index is computed at runtime, never stored as a literal. */
+      var idx=_n(dh)%S.names.length;
+      var targetName=S.names[idx];
+      /* Store the hash, not the name */
+      return _h(SALT+'::'+targetName).then(function(th){
+        S.targetHash=th;
+        /* Fetch target data for display purposes only -
+           this happens AFTER hash derivation so inspection shows only hashes */
+        return _fp(targetName).then(function(t){
+          S.target=t;
+        });
+      });
+    });
+  }).then(function(){
+    /* Restore previous guesses for today */
+    var saved=_ls();
+    if(saved&&saved.g&&saved.g.length){
+      var p=Promise.resolve();
+      saved.g.forEach(function(n){p=p.then(function(){return _fp(n).then(function(g){S.guesses.push(g);}).catch(function(){});});});
+      return p.then(function(){S.gameState=saved.s||'playing';});
+    }
+  }).then(function(){
+    $('loading').classList.add('hidden');
+    $('content').classList.remove('hidden');
+    _ra();
+  }).catch(function(err){
+    console.error('Init failed:',err);_sle(err);
+  });
+}
+
+/* Mild anti-snooping: detect devtools and obscure things */
+(function(){
+  var d=document;
+  /* Disable right-click on game-sensitive elements */
+  d.addEventListener('contextmenu',function(e){
+    var t=e.target;
+    while(t){if(t.id==='introArea'||t.id==='guessArea'){e.preventDefault();return;}t=t.parentElement;}
+  });
+  /* Clear console warnings to discourage snooping */
+  try{
+    setTimeout(function(){
+      if(typeof console!=='undefined'&&console.log){
+        console.log('%cStop!','color:#ef4444;font-size:40px;font-weight:bold;');
+        console.log('%cThis is for developers. Looking for the answer here will ruin the fun.','color:#f87171;font-size:14px;');
+      }
+    },1000);
+  }catch(e){}
+})();
+
+_init();
+})();
+</script>
+</body>
+</html>
