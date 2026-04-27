@@ -34,6 +34,20 @@
   .icon-btn { padding: 8px; border-radius: 6px; color: var(--muted); transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; }
   .icon-btn:hover { background: #27272f; color: var(--text); }
 
+  /* Mode toggle pill */
+  .mode-toggle { display: inline-flex; background: rgba(23,23,30,0.8); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; margin-right: 8px; }
+  .mode-btn { padding: 6px 12px; border-radius: 6px; font-family: 'Silkscreen', monospace; font-size: 10px; color: var(--muted); transition: all 0.15s; letter-spacing: 0.05em; }
+  .mode-btn:hover { color: var(--text); }
+  .mode-btn.active { background: var(--red-soft); color: #fca5a5; border: 1px solid var(--red-border); }
+  @media (max-width: 480px) {
+    .mode-btn { padding: 5px 8px; font-size: 9px; }
+    .mode-toggle { margin-right: 4px; }
+  }
+
+  /* Reset button (unlimited mode) */
+  .reset-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(239,68,68,0.15); border: 1px solid var(--red-border); border-radius: 8px; color: #fca5a5; font-family: 'Silkscreen', monospace; font-size: 11px; transition: all 0.15s; letter-spacing: 0.05em; }
+  .reset-btn:hover { background: rgba(239,68,68,0.25); color: #fff; }
+
   main { max-width: 1024px; margin: 0 auto; padding: 32px 24px; }
   @media (max-width: 640px) { main { padding: 24px 16px; } .header-inner { padding: 14px 16px; } }
 
@@ -61,7 +75,7 @@
   .error-msg { color: #f87171; font-size: 14px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
 
   .grid-scroll { overflow-x: auto; padding-bottom: 16px; }
-  .grid { min-width: 740px; }
+  .grid { min-width: 820px; }
   .grid-header { display: flex; gap: 8px; padding: 0 4px 8px; }
   .grid-header > div { font-family: 'Silkscreen', monospace; font-size: 10px; color: var(--muted); text-align: center; }
   .row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -72,8 +86,8 @@
 
   .cell { border-radius: 10px; border: 1px solid; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 64px; }
   .w-name-col { min-width: 180px; flex: 1; }
-  .w-type { width: 112px; } .w-gen { width: 80px; } .w-num { width: 96px; } .w-color { width: 96px; }
-  @media (max-width: 640px) { .w-type { width: 96px; } .w-gen { width: 64px; } .w-num { width: 80px; } .w-color { width: 80px; } }
+  .w-type { width: 112px; } .w-gen { width: 80px; } .w-stage { width: 80px; } .w-num { width: 96px; } .w-color { width: 96px; }
+  @media (max-width: 640px) { .w-type { width: 96px; } .w-gen { width: 64px; } .w-stage { width: 64px; } .w-num { width: 80px; } .w-color { width: 80px; } }
 
   .cell-correct { background: var(--emerald-soft); border-color: var(--emerald-border); color: var(--emerald-text); }
   .cell-close { background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber-text); }
@@ -151,6 +165,10 @@
       </div>
     </div>
     <div class="header-btns">
+      <div class="mode-toggle" role="tablist" aria-label="Game mode">
+        <button class="mode-btn active" id="modeDailyBtn" data-mode="daily" role="tab" aria-selected="true">DAILY</button>
+        <button class="mode-btn" id="modeUnlimitedBtn" data-mode="unlimited" role="tab" aria-selected="false">UNLIMITED</button>
+      </div>
       <button class="icon-btn" id="statsBtn" aria-label="Stats">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
       </button>
@@ -195,17 +213,18 @@
     <div class="modal-body">
       <p>Guess today's <strong style="color:#f87171;">mystery Pokémon</strong>. Each guess returns feedback across 6 traits.</p>
       <div class="legend-item"><span class="legend-swatch" style="background: var(--emerald-soft); border-color: var(--emerald-border);"></span><span>Exact match</span></div>
-      <div class="legend-item"><span class="legend-swatch" style="background: var(--amber-soft); border-color: var(--amber-border);"></span><span>Close — type in other slot, or gen/size is nearby</span></div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--amber-soft); border-color: var(--amber-border);"></span><span>Close — type in other slot, or gen/stage/size is nearby</span></div>
       <div class="legend-item"><span class="legend-swatch" style="background: rgba(41,41,51,0.6); border-color: var(--border);"></span><span>No match</span></div>
       <div class="legend-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a1a1aa;"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><span>Target is higher</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a1a1aa; margin-left:8px;"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg><span>Target is lower</span>
       </div>
       <div class="modal-footer">
-        <p>• 10 guesses per day</p>
+        <p>• 10 guesses per round</p>
+        <p>• <strong>Daily</strong>: same Pokémon for everyone, resets at midnight</p>
+        <p>• <strong>Unlimited</strong>: random Pokémon, play as many rounds as you want</p>
         <p>• Base species only — no Mega, Dynamax, or alternate forms</p>
         <p>• All 1,025 Pokémon across Generations 1–9</p>
-        <p>• New Pokémon every day at midnight (local time)</p>
       </div>
     </div>
   </div>
@@ -232,8 +251,10 @@
 var _0x=[0x401,0xa,'https://pokeapi.co/api/v2',
 'DexdleSalt_v1_k9Xp2mQ7nR4tY8vL','dexdle-s-v1','dexdle-t-v1',
 'normal:A8A77A|fire:EE8130|water:6390F0|electric:F7D02C|grass:7AC74C|ice:96D9D6|fighting:C22E28|poison:A33EA1|ground:E2BF65|flying:A98FF3|psychic:F95587|bug:A6B91A|rock:B6A136|ghost:735797|dragon:6F35FC|dark:705746|steel:B7B7CE|fairy:D685AD',
-'red:dc2626|blue:2563eb|yellow:eab308|green:16a34a|black:111111|brown:8b5a2b|purple:7c3aed|gray:6b7280|white:f3f4f6|pink:ec4899'];
+'red:dc2626|blue:2563eb|yellow:eab308|green:16a34a|black:111111|brown:8b5a2b|purple:7c3aed|gray:6b7280|white:f3f4f6|pink:ec4899',
+'dexdle-su-v1','dexdle-tu-v1','dexdle-mode-v1'];
 var L=_0x[0],M=_0x[1],A=_0x[2],SALT=_0x[3];
+var KS=_0x[4],KT=_0x[5],KSU=_0x[8],KTU=_0x[9],KM=_0x[10];
 var TC={},CS={},RG={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9};
 _0x[6].split('|').forEach(function(p){var x=p.split(':');TC[x[0]]='#'+x[1];});
 _0x[7].split('|').forEach(function(p){var x=p.split(':');CS[x[0]]='#'+x[1];});
@@ -256,16 +277,40 @@ function _pg(n){return RG[n.replace('generation-','')]||0;}
 function _il(hex){var h=hex.replace('#','');var r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);return (r*299+g*587+b*114)/1000>160;}
 function _eh(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
-/* State */
-var S={names:[],nameHashes:{},target:null,targetHash:null,guesses:[],gameState:'playing',input:'',hl:0,showSug:false,guessing:false,
-stats:{played:0,won:0,streak:0,maxStreak:0,guessDistribution:{}}};
+/* State - separate slots for daily and unlimited modes */
+var S={
+  mode:'daily',  /* 'daily' or 'unlimited' */
+  names:[],
+  /* Daily mode game state */
+  daily:{target:null,targetHash:null,guesses:[],gameState:'playing'},
+  /* Unlimited mode game state */
+  unlimited:{target:null,targetHash:null,guesses:[],gameState:'playing'},
+  /* Shared UI state */
+  input:'',hl:0,showSug:false,guessing:false,
+  /* Stats per mode */
+  stats:{played:0,won:0,streak:0,maxStreak:0,guessDistribution:{}},
+  statsU:{played:0,won:0,streak:0,maxStreak:0,guessDistribution:{}}
+};
+/* Convenience getter for current mode's game data */
+function _G(){return S[S.mode];}
 var CACHE={};
 
 /* Storage */
-function _ls(){try{var r=localStorage.getItem(_0x[4]);if(r){var p=JSON.parse(r);if(p.d===_td())return p;}}catch(e){}return null;}
-function _ss(){try{localStorage.setItem(_0x[4],JSON.stringify({d:_td(),g:S.guesses.map(function(x){return x.name;}),s:S.gameState}));}catch(e){}}
-function _lt(){try{var r=localStorage.getItem(_0x[5]);if(r)return JSON.parse(r);}catch(e){}return S.stats;}
-function _st(){try{localStorage.setItem(_0x[5],JSON.stringify(S.stats));}catch(e){}}
+/* Daily state - tied to today's date */
+function _ls(){try{var r=localStorage.getItem(KS);if(r){var p=JSON.parse(r);if(p.d===_td())return p;}}catch(e){}return null;}
+function _ss(){try{var g=S.daily;localStorage.setItem(KS,JSON.stringify({d:_td(),g:g.guesses.map(function(x){return x.name;}),s:g.gameState}));}catch(e){}}
+/* Unlimited state - persists across sessions, tied to seed */
+function _lsu(){try{var r=localStorage.getItem(KSU);if(r)return JSON.parse(r);}catch(e){}return null;}
+function _ssu(){try{var g=S.unlimited;localStorage.setItem(KSU,JSON.stringify({seed:g.seed||null,g:g.guesses.map(function(x){return x.name;}),s:g.gameState}));}catch(e){}}
+function _csu(){try{localStorage.removeItem(KSU);}catch(e){}}
+/* Stats */
+function _lt(){try{var r=localStorage.getItem(KT);if(r)return JSON.parse(r);}catch(e){}return S.stats;}
+function _st(){try{localStorage.setItem(KT,JSON.stringify(S.stats));}catch(e){}}
+function _ltu(){try{var r=localStorage.getItem(KTU);if(r)return JSON.parse(r);}catch(e){}return S.statsU;}
+function _stu(){try{localStorage.setItem(KTU,JSON.stringify(S.statsU));}catch(e){}}
+/* Mode preference */
+function _lm(){try{var m=localStorage.getItem(KM);return m==='unlimited'?'unlimited':'daily';}catch(e){}return 'daily';}
+function _sm(){try{localStorage.setItem(KM,S.mode);}catch(e){}}
 
 /* Fetch w/ retry */
 function _fwr(u,at,to){at=at||3;to=to||15000;var last;
@@ -277,19 +322,150 @@ function _fwr(u,at,to){at=at||3;to=to||15000;var last;
   return go(0);
 }
 
-/* Fetch + normalize pokemon data */
+/* Name alias map: many Pokémon with multiple forms don't resolve via the bare
+   species name on /pokemon/ - we have to ask for a specific default form.
+   Key = species slug (what /pokemon-species/ returns). Value = /pokemon/ slug. */
+var FORM_MAP={
+  'deoxys':'deoxys-normal',
+  'wormadam':'wormadam-plant',
+  'giratina':'giratina-altered',
+  'shaymin':'shaymin-land',
+  'basculin':'basculin-red-striped',
+  'darmanitan':'darmanitan-standard',
+  'tornadus':'tornadus-incarnate',
+  'thundurus':'thundurus-incarnate',
+  'landorus':'landorus-incarnate',
+  'keldeo':'keldeo-ordinary',
+  'meloetta':'meloetta-aria',
+  'meowstic':'meowstic-male',
+  'aegislash':'aegislash-shield',
+  'pumpkaboo':'pumpkaboo-average',
+  'gourgeist':'gourgeist-average',
+  'zygarde':'zygarde-50',
+  'oricorio':'oricorio-baile',
+  'lycanroc':'lycanroc-midday',
+  'wishiwashi':'wishiwashi-solo',
+  'minior':'minior-red-meteor',
+  'mimikyu':'mimikyu-disguised',
+  'toxtricity':'toxtricity-amped',
+  'eiscue':'eiscue-ice',
+  'indeedee':'indeedee-male',
+  'morpeko':'morpeko-full-belly',
+  'urshifu':'urshifu-single-strike',
+  'basculegion':'basculegion-male',
+  'enamorus':'enamorus-incarnate',
+  'oinkologne':'oinkologne-male',
+  'maushold':'maushold-family-of-four',
+  'squawkabilly':'squawkabilly-green-plumage',
+  'palafin':'palafin-zero',
+  'tatsugiri':'tatsugiri-curly',
+  'dudunsparce':'dudunsparce-two-segment',
+  'ogerpon':'ogerpon-teal-mask',
+  'terapagos':'terapagos-normal',
+  /* Common typo-friendly user inputs */
+  'mr-mime':'mr-mime',
+  'mime-jr':'mime-jr',
+  'mr-rime':'mr-rime',
+  'type-null':'type-null',
+  'jangmo-o':'jangmo-o','hakamo-o':'hakamo-o','kommo-o':'kommo-o',
+  'porygon-z':'porygon-z','ho-oh':'ho-oh',
+  'nidoran-f':'nidoran-f','nidoran-m':'nidoran-m'
+};
+
+/* Common user-input variants -> canonical species slug.
+   Handles "mr mime", "mr. mime", "ho oh", accents, etc. */
+function _normalize(input){
+  var s=String(input).toLowerCase().trim();
+  /* Strip accents (é -> e, etc) */
+  s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  /* Replace gender symbols */
+  s=s.replace(/♀/g,'-f').replace(/♂/g,'-m');
+  /* Remove apostrophes and periods */
+  s=s.replace(/['.\u2019]/g,'');
+  /* Collapse whitespace and any non-alphanum (except hyphens) to hyphens */
+  s=s.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  /* Collapse multiple hyphens */
+  s=s.replace(/-+/g,'-').replace(/^-|-$/g,'');
+  return s;
+}
+
+/* Fetch + normalize pokemon data.
+   Strategy: try the name as given, then try mapped form, then try -incarnate, -normal, etc. */
 function _fp(idOrName){
-  var k=String(idOrName).toLowerCase();
+  var orig=String(idOrName).toLowerCase();
+  var k=_normalize(idOrName);
   if(CACHE[k])return Promise.resolve(CACHE[k]);
-  return Promise.all([_fwr(A+'/pokemon/'+k),_fwr(A+'/pokemon-species/'+k)]).then(function(r){
+  if(CACHE[orig])return Promise.resolve(CACHE[orig]);
+
+  /* Build candidate list to try in order */
+  var candidates=[k];
+  if(FORM_MAP[k])candidates.unshift(FORM_MAP[k]);
+  /* Common form fallbacks if first attempt fails */
+  var fallbacks=['-incarnate','-normal','-altered','-land','-aria','-ordinary','-standard','-plant','-shield','-average','-50','-baile','-midday','-solo','-disguised','-amped','-ice','-male','-full-belly','-single-strike','-zero','-curly','-two-segment','-teal-mask','-red-striped','-red-meteor','-family-of-four','-green-plumage'];
+
+  function tryNext(idx){
+    if(idx>=candidates.length){
+      /* All candidates exhausted - try fallback suffixes on the base name */
+      return tryFallback(0);
+    }
+    var name=candidates[idx];
+    return Promise.all([_fwr(A+'/pokemon/'+name),_fwr(A+'/pokemon-species/'+k)])
+      .then(function(r){return _build(r,k);})
+      .catch(function(){return tryNext(idx+1);});
+  }
+  function tryFallback(fi){
+    if(fi>=fallbacks.length)return Promise.reject(new Error('not-found'));
+    return Promise.all([_fwr(A+'/pokemon/'+k+fallbacks[fi]),_fwr(A+'/pokemon-species/'+k)])
+      .then(function(r){return _build(r,k);})
+      .catch(function(){return tryFallback(fi+1);});
+  }
+  function _build(r,speciesKey){
     var p=r[0],s=r[1];
-    var d={id:p.id,name:p.name,displayName:_fn(p.name),
+    var d={id:s.id,name:s.name,displayName:_fn(s.name),
       sprite:(p.sprites.other&&p.sprites.other['official-artwork']&&p.sprites.other['official-artwork'].front_default)||p.sprites.front_default,
       type1:p.types[0].type.name,type2:p.types[1]?p.types[1].type.name:null,
-      height:p.height/10,weight:p.weight/10,generation:_pg(s.generation.name),color:s.color.name};
-    CACHE[k]=d;CACHE[String(d.id)]=d;CACHE[d.name]=d;
-    return d;
-  });
+      height:p.height/10,weight:p.weight/10,generation:_pg(s.generation.name),color:s.color.name,
+      stage:1};
+    /* Fetch evolution chain to compute stage */
+    var chainUrl=s.evolution_chain&&s.evolution_chain.url;
+    var stagePromise=chainUrl?_evoStage(chainUrl,s.name):Promise.resolve(1);
+    return stagePromise.then(function(stg){
+      d.stage=stg;
+      CACHE[speciesKey]=d;CACHE[String(d.id)]=d;CACHE[d.name]=d;CACHE[orig]=d;
+      return d;
+    });
+  }
+  return tryNext(0);
+}
+
+/* Cache for evolution chains - many Pokemon share the same chain */
+var EVO_CACHE={};
+/* Compute evolution stage by walking the chain tree.
+   Stage 1 = base (no pre-evolutions in this line)
+   Stage 2 = first evolution
+   Stage 3 = second evolution
+   Single-stage Pokémon (Tauros, legendaries) = Stage 1 */
+function _evoStage(chainUrl,speciesName){
+  if(EVO_CACHE[chainUrl]){
+    return Promise.resolve(_findStage(EVO_CACHE[chainUrl],speciesName));
+  }
+  return _fwr(chainUrl).then(function(data){
+    EVO_CACHE[chainUrl]=data.chain;
+    return _findStage(data.chain,speciesName);
+  }).catch(function(){return 1;});
+}
+/* Walk the chain tree (chain.species.name + chain.evolves_to[]) recursively.
+   Return the depth (1-indexed) of the matching species name. */
+function _findStage(node,target,depth){
+  depth=depth||1;
+  if(node.species&&node.species.name===target)return depth;
+  if(node.evolves_to&&node.evolves_to.length){
+    for(var i=0;i<node.evolves_to.length;i++){
+      var found=_findStage(node.evolves_to[i],target,depth+1);
+      if(found)return found;
+    }
+  }
+  return 0;  /* not found - shouldn't happen if data is consistent */
 }
 
 /* Compare guess to target - works with the actual resolved target object.
@@ -307,7 +483,12 @@ function _cmp(g,t){
   if(Math.abs(g.weight-t.weight)<0.5)w='correct';
   else{var d3=t.weight-g.weight;var p3=Math.abs(d3)/Math.max(t.weight,0.1);w=p3<0.25?'close':'wrong';wa=d3>0?'up':'down';}
   var c=g.color===t.color?'correct':'wrong';
-  return{type1:t1,type2:t2,gen:gen,genArrow:ga,height:h,heightArrow:ha,weight:w,weightArrow:wa,color:c};
+  /* Evolution stage: exact match green, off-by-one amber, else wrong */
+  var stg,sta=null;
+  var gs=g.stage||1, ts=t.stage||1;
+  if(gs===ts)stg='correct';
+  else{var d4=ts-gs;stg=Math.abs(d4)===1?'close':'wrong';sta=d4>0?'up':'down';}
+  return{type1:t1,type2:t2,gen:gen,genArrow:ga,height:h,heightArrow:ha,weight:w,weightArrow:wa,color:c,stage:stg,stageArrow:sta};
 }
 
 /* Arrow/flame SVGs */
@@ -322,45 +503,57 @@ var $=function(i){return document.getElementById(i);};
 
 function _ri(){
   var e=$('introArea');
-  if(S.gameState==='playing'){
-    var r=M-S.guesses.length;
-    e.innerHTML='<div class="intro"><div><div class="font-pixel intro-label">MISSION</div><h2>Identify today\'s Pokémon</h2><p>Each guess reveals clues. Match all traits to win.</p></div><div class="font-mono remaining">'+r+' guess'+(r===1?'':'es')+' remaining</div></div>';
-  }else if(S.gameState==='won'){
-    e.innerHTML='<div class="banner win"><img src="'+S.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">ENTRY IDENTIFIED</div><h2>'+_eh(S.target.displayName)+'</h2><p>Caught in '+S.guesses.length+' guess'+(S.guesses.length===1?'':'es')+' · <span class="streak">'+_fs()+' streak '+S.stats.streak+'</span></p><div class="sub">Next Pokémon unlocks at midnight.</div></div></div>';
+  var g=_G();
+  var st=S.mode==='daily'?S.stats:S.statsU;
+  var isDaily=S.mode==='daily';
+  if(g.gameState==='playing'){
+    var r=M-g.guesses.length;
+    var title=isDaily?"Identify today's Pokémon":"Identify the mystery Pokémon";
+    var sub=isDaily?'Each guess reveals clues. Match all traits to win.':'Endless rounds. Play as many as you want.';
+    e.innerHTML='<div class="intro"><div><div class="font-pixel intro-label">MISSION</div><h2>'+title+'</h2><p>'+sub+'</p></div><div class="font-mono remaining">'+r+' guess'+(r===1?'':'es')+' remaining</div></div>';
+  }else if(g.gameState==='won'){
+    var nextLine=isDaily?'<div class="sub">Next Pokémon unlocks at midnight.</div>':'<div style="margin-top:14px;"><button class="reset-btn" id="newRoundBtn">▶ NEW ROUND</button></div>';
+    e.innerHTML='<div class="banner win"><img src="'+g.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">ENTRY IDENTIFIED</div><h2>'+_eh(g.target.displayName)+'</h2><p>Caught in '+g.guesses.length+' guess'+(g.guesses.length===1?'':'es')+' · <span class="streak">'+_fs()+' streak '+st.streak+'</span></p>'+nextLine+'</div></div>';
   }else{
-    e.innerHTML='<div class="banner lose"><img src="'+S.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">TARGET ESCAPED</div><h2>It was '+_eh(S.target.displayName)+'</h2><p>Out of guesses. Come back tomorrow for a new challenge.</p></div></div>';
+    var loseLine=isDaily?'<p>Out of guesses. Come back tomorrow for a new challenge.</p>':'<p>Out of guesses. Want to try another?</p><div style="margin-top:14px;"><button class="reset-btn" id="newRoundBtn">▶ NEW ROUND</button></div>';
+    e.innerHTML='<div class="banner lose"><img src="'+g.target.sprite+'" alt=""><div style="flex:1;"><div class="font-pixel label">TARGET ESCAPED</div><h2>It was '+_eh(g.target.displayName)+'</h2>'+loseLine+'</div></div>';
   }
+  /* Wire up new round button if present */
+  var nrb=document.getElementById('newRoundBtn');
+  if(nrb)nrb.addEventListener('click',_newRound);
 }
-function _rs(){$('searchWrapper').classList.toggle('hidden',S.gameState!=='playing');}
+function _rs(){$('searchWrapper').classList.toggle('hidden',_G().gameState!=='playing');}
 
 function _rg(){
   var a=$('guessArea');
-  if(S.guesses.length===0){
-    if(S.gameState==='playing')a.innerHTML='<div class="empty-state"><div class="label">AWAITING FIRST GUESS</div><p>Try any Pokémon from Gen 1–9. The Pokédex will show you how close you are to the target species.</p></div>';
+  var gm=_G();
+  if(gm.guesses.length===0){
+    if(gm.gameState==='playing')a.innerHTML='<div class="empty-state"><div class="label">AWAITING FIRST GUESS</div><p>Try any Pokémon from Gen 1–9. The Pokédex will show you how close you are to the target species.</p></div>';
     else a.innerHTML='';
     return;
   }
-  var rh=S.guesses.map(function(g){
-    var c=_cmp(g,S.target);
+  var rh=gm.guesses.map(function(g){
+    var c=_cmp(g,gm.target);
     var tb=function(t){if(!t)return '<span style="color:var(--dim); font-size:12px;">—</span>';var co=TC[t]||'#555';return '<span class="type-badge" style="background:'+co+'; color:'+(_il(co)?'#111':'#fff')+';">'+_eh(t)+'</span>';};
     var cells=[
       {c:'cell w-type cell-'+c.type1,h:tb(g.type1)},
       {c:'cell w-type cell-'+c.type2,h:tb(g.type2)},
       {c:'cell w-gen cell-'+c.gen,h:'<span class="arrow-group">'+g.generation+_as(c.genArrow)+'</span>'},
+      {c:'cell w-stage cell-'+c.stage,h:'<span class="arrow-group">'+(g.stage||1)+_as(c.stageArrow)+'</span>'},
       {c:'cell w-num cell-'+c.height,h:'<span class="arrow-group">'+g.height.toFixed(1)+'m'+_as(c.heightArrow)+'</span>'},
       {c:'cell w-num cell-'+c.weight,h:'<span class="arrow-group">'+g.weight.toFixed(1)+_as(c.weightArrow)+'</span>'},
       {c:'cell w-color cell-'+c.color,h:'<div class="color-dot"><span class="dot" style="background:'+(CS[g.color]||'#999')+';"></span><span class="label">'+_eh(g.color)+'</span></div>'}
     ];
     return '<div class="row slide-up"><div class="row-card"><img src="'+g.sprite+'" alt=""><div style="min-width:0;"><div class="name">'+_eh(g.displayName)+'</div><div class="dex-num">#'+String(g.id).padStart(4,'0')+'</div></div></div>'+cells.map(function(x){return '<div class="'+x.c+'">'+x.h+'</div>';}).join('')+'</div>';
   }).join('');
-  a.innerHTML='<div class="grid-scroll"><div class="grid"><div class="grid-header"><div class="w-name-col">POKÉMON</div><div class="w-type">TYPE 1</div><div class="w-type">TYPE 2</div><div class="w-gen">GEN</div><div class="w-num">HEIGHT</div><div class="w-num">WEIGHT</div><div class="w-color">COLOR</div></div>'+rh+'</div></div>';
+  a.innerHTML='<div class="grid-scroll"><div class="grid"><div class="grid-header"><div class="w-name-col">POKÉMON</div><div class="w-type">TYPE 1</div><div class="w-type">TYPE 2</div><div class="w-gen">GEN</div><div class="w-stage">STAGE</div><div class="w-num">HEIGHT</div><div class="w-num">WEIGHT</div><div class="w-color">COLOR</div></div>'+rh+'</div></div>';
 }
 
 function _rsug(){
   var e=$('suggestions');
   if(!S.showSug||!S.input.trim()){e.classList.add('hidden');return;}
-  var q=S.input.toLowerCase().replace(/\s+/g,'-');
-  var gd={};S.guesses.forEach(function(x){gd[x.name]=1;});
+  var q=_normalize(S.input);
+  var gd={};_G().guesses.forEach(function(x){gd[x.name]=1;});
   var st=[],co=[];
   for(var i=0;i<S.names.length;i++){var n=S.names[i];if(gd[n])continue;if(n.indexOf(q)===0)st.push(n);else if(n.indexOf(q)>0)co.push(n);if(st.length>=8)break;}
   var ls=st.concat(co).slice(0,7);
@@ -376,43 +569,109 @@ function _hs(){S.showSug=false;$('suggestions').classList.add('hidden');$('searc
 
 function _rst(){
   var b=$('statsBody');
-  var wp=S.stats.played>0?Math.round((S.stats.won/S.stats.played)*100):0;
-  var d=S.stats.guessDistribution||{};
+  var stats=S.mode==='daily'?S.stats:S.statsU;
+  var wp=stats.played>0?Math.round((stats.won/stats.played)*100):0;
+  var d=stats.guessDistribution||{};
   var mb=Math.max.apply(null,[1].concat(Object.keys(d).map(function(k){return d[k];})));
   var rows='';
   for(var n=1;n<=M;n++){var c=d[n]||0;var w=Math.max((c/mb)*100,c>0?8:0);rows+='<div class="dist-row"><span class="num">'+n+'</span><div class="dist-bar"><div class="dist-fill" style="width:'+w+'%;">'+(c>0?c:'')+'</div></div></div>';}
-  b.innerHTML='<div class="stat-grid"><div><div class="stat-val">'+S.stats.played+'</div><div class="stat-label">Played</div></div><div><div class="stat-val">'+wp+'</div><div class="stat-label">Win %</div></div><div><div class="stat-val"><span class="flame">'+_fs()+'</span>'+S.stats.streak+'</div><div class="stat-label">Streak</div></div><div><div class="stat-val">'+S.stats.maxStreak+'</div><div class="stat-label">Best</div></div></div><div class="dist-label">GUESS DISTRIBUTION</div><div>'+rows+'</div>';
+  var modeLabel=S.mode==='daily'?'DAILY MODE':'UNLIMITED MODE';
+  b.innerHTML='<div class="font-pixel" style="font-size:10px; color:var(--muted); text-align:center; margin-bottom:12px;">'+modeLabel+'</div><div class="stat-grid"><div><div class="stat-val">'+stats.played+'</div><div class="stat-label">Played</div></div><div><div class="stat-val">'+wp+'</div><div class="stat-label">Win %</div></div><div><div class="stat-val"><span class="flame">'+_fs()+'</span>'+stats.streak+'</div><div class="stat-label">Streak</div></div><div><div class="stat-val">'+stats.maxStreak+'</div><div class="stat-label">Best</div></div></div><div class="dist-label">GUESS DISTRIBUTION</div><div>'+rows+'</div>';
 }
 function _ra(){_ri();_rs();_rg();}
 
 /* Submit guess - fetches guess data, compares to resolved target */
 function _sg(nm){
-  if(!nm||S.guessing||S.gameState!=='playing')return;
-  var nz=nm.toLowerCase().replace(/\s+/g,'-');
-  for(var i=0;i<S.guesses.length;i++)if(S.guesses[i].name===nz){_se('Already guessed that one');return;}
+  var gm=_G();
+  if(!nm||S.guessing||gm.gameState!=='playing')return;
+  var nz=_normalize(nm);
   S.guessing=true;$('searchBox').classList.add('loading');_ce();
   _fp(nz).then(function(d){
-    S.guesses.push(d);S.input='';$('searchInput').value='';_hs();
+    /* Check for duplicate after resolving - the canonical species name might differ from input */
+    for(var i=0;i<gm.guesses.length;i++){
+      if(gm.guesses[i].name===d.name){_se('Already guessed that one');S.guessing=false;$('searchBox').classList.remove('loading');return null;}
+    }
+    gm.guesses.push(d);S.input='';$('searchInput').value='';_hs();
     /* Compare by hash so the target name never needs to sit in memory prominently */
     return _h(SALT+'::'+d.name).then(function(gh){
-      if(gh===S.targetHash){
-        S.gameState='won';_us(true,S.guesses.length);
-      }else if(S.guesses.length>=M){
-        S.gameState='lost';_us(false,S.guesses.length);
+      if(gh===gm.targetHash){
+        gm.gameState='won';_us(true,gm.guesses.length);
+      }else if(gm.guesses.length>=M){
+        gm.gameState='lost';_us(false,gm.guesses.length);
       }
-      _ss();_ra();S.guessing=false;$('searchBox').classList.remove('loading');
+      _persist();_ra();
     });
+  }).then(function(){
+    S.guessing=false;$('searchBox').classList.remove('loading');
   }).catch(function(){_se("Couldn't find that Pokémon");S.guessing=false;$('searchBox').classList.remove('loading');});
 }
+/* Persist current mode's game state */
+function _persist(){if(S.mode==='daily')_ss();else _ssu();}
+/* Update stats for current mode */
 function _us(w,at){
-  var ns=w?S.stats.streak+1:0;
-  var nd={};Object.keys(S.stats.guessDistribution).forEach(function(k){nd[k]=S.stats.guessDistribution[k];});
+  var stats=S.mode==='daily'?S.stats:S.statsU;
+  var ns=w?stats.streak+1:0;
+  var nd={};Object.keys(stats.guessDistribution).forEach(function(k){nd[k]=stats.guessDistribution[k];});
   if(w)nd[at]=(nd[at]||0)+1;
-  S.stats={played:S.stats.played+1,won:w?S.stats.won+1:S.stats.won,streak:ns,maxStreak:Math.max(S.stats.maxStreak,ns),guessDistribution:nd};
-  _st();
+  var newStats={played:stats.played+1,won:w?stats.won+1:stats.won,streak:ns,maxStreak:Math.max(stats.maxStreak,ns),guessDistribution:nd};
+  if(S.mode==='daily'){S.stats=newStats;_st();}else{S.statsU=newStats;_stu();}
 }
 function _se(m){var e=$('errorMsg');e.textContent=m;e.classList.remove('hidden');}
 function _ce(){$('errorMsg').classList.add('hidden');}
+
+/* Start a new unlimited round - pick random Pokemon, reset guess state */
+function _newRound(){
+  if(S.mode!=='unlimited'||!S.names.length)return;
+  S.guessing=true;$('searchBox').classList.add('loading');
+  /* Random index using crypto-strong randomness when available */
+  var idx;
+  if(window.crypto&&crypto.getRandomValues){
+    var arr=new Uint32Array(1);crypto.getRandomValues(arr);
+    idx=arr[0]%S.names.length;
+  }else{
+    idx=Math.floor(Math.random()*S.names.length);
+  }
+  var targetName=S.names[idx];
+  /* Reset unlimited game state */
+  S.unlimited={target:null,targetHash:null,guesses:[],gameState:'playing',seed:Date.now()+'-'+idx};
+  /* Compute hash, then fetch target data */
+  _h(SALT+'::'+targetName).then(function(th){
+    S.unlimited.targetHash=th;
+    return _fp(targetName);
+  }).then(function(t){
+    S.unlimited.target=t;
+    _csu();_ssu();
+    S.guessing=false;$('searchBox').classList.remove('loading');
+    _ra();
+    $('searchInput').focus();
+  }).catch(function(err){
+    console.error('New round failed:',err);
+    S.guessing=false;$('searchBox').classList.remove('loading');
+    _se('Failed to start new round. Try again.');
+  });
+}
+
+/* Switch between daily and unlimited modes */
+function _switchMode(newMode){
+  if(newMode===S.mode)return;
+  S.mode=newMode;
+  _sm();
+  /* Update toggle UI */
+  document.getElementById('modeDailyBtn').classList.toggle('active',newMode==='daily');
+  document.getElementById('modeDailyBtn').setAttribute('aria-selected',newMode==='daily');
+  document.getElementById('modeUnlimitedBtn').classList.toggle('active',newMode==='unlimited');
+  document.getElementById('modeUnlimitedBtn').setAttribute('aria-selected',newMode==='unlimited');
+  /* Update header subtitle */
+  $('dateLabel').textContent=newMode==='daily'?'DAILY ENTRY — '+_td():'UNLIMITED MODE';
+  /* Clear input and suggestions */
+  S.input='';$('searchInput').value='';_hs();_ce();
+  /* If unlimited mode has no active game, start one */
+  if(newMode==='unlimited'&&!S.unlimited.target){
+    _newRound();
+  }else{
+    _ra();
+  }
+}
 
 function _be(){
   var i=$('searchInput');
@@ -428,6 +687,9 @@ function _be(){
   });
   $('helpBtn').addEventListener('click',function(){$('helpModal').classList.remove('hidden');});
   $('statsBtn').addEventListener('click',function(){_rst();$('statsModal').classList.remove('hidden');});
+  /* Mode toggle */
+  $('modeDailyBtn').addEventListener('click',function(){_switchMode('daily');});
+  $('modeUnlimitedBtn').addEventListener('click',function(){_switchMode('unlimited');});
   var ovs=document.querySelectorAll('.modal-overlay');
   for(var j=0;j<ovs.length;j++){(function(o){o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-close-modal]'))o.classList.add('hidden');});})(ovs[j]);}
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){var a=document.querySelectorAll('.modal-overlay');for(var k=0;k<a.length;k++)a[k].classList.add('hidden');}});
@@ -442,39 +704,56 @@ function _sle(err){
 
 /* Init: load name list, compute today's target HASH (not ID),
    then resolve the actual target Pokemon by matching hashes.
-   The raw ID and name are never hardcoded or derivable from source. */
+   Also restores unlimited mode if the user was in it. */
 function _init(){
   $('dateLabel').textContent='DAILY ENTRY — '+_td();
   _be();
   S.stats=_lt();
+  S.statsU=_ltu();
+
+  /* Restore last selected mode */
+  S.mode=_lm();
+  document.getElementById('modeDailyBtn').classList.toggle('active',S.mode==='daily');
+  document.getElementById('modeUnlimitedBtn').classList.toggle('active',S.mode==='unlimited');
+  if(S.mode==='unlimited')$('dateLabel').textContent='UNLIMITED MODE';
 
   /* Load full name list first - required for hash matching */
   _fwr(A+'/pokemon-species?limit='+L,2,15000).then(function(d){
     S.names=d.results.map(function(p){return p.name;});
 
-    /* Compute today's target hash from date + salt */
+    /* Always set up daily mode (we may switch to it later) */
     return _h(SALT+'::'+_td()+'::daily_target').then(function(dh){
-      /* Use the date hash to derive an index into the name list.
-         The index is computed at runtime, never stored as a literal. */
       var idx=_n(dh)%S.names.length;
       var targetName=S.names[idx];
-      /* Store the hash, not the name */
       return _h(SALT+'::'+targetName).then(function(th){
-        S.targetHash=th;
-        /* Fetch target data for display purposes only -
-           this happens AFTER hash derivation so inspection shows only hashes */
-        return _fp(targetName).then(function(t){
-          S.target=t;
-        });
+        S.daily.targetHash=th;
+        return _fp(targetName).then(function(t){S.daily.target=t;});
       });
     });
   }).then(function(){
-    /* Restore previous guesses for today */
+    /* Restore daily mode guesses if today's date matches */
     var saved=_ls();
     if(saved&&saved.g&&saved.g.length){
       var p=Promise.resolve();
-      saved.g.forEach(function(n){p=p.then(function(){return _fp(n).then(function(g){S.guesses.push(g);}).catch(function(){});});});
-      return p.then(function(){S.gameState=saved.s||'playing';});
+      saved.g.forEach(function(n){p=p.then(function(){return _fp(n).then(function(g){S.daily.guesses.push(g);}).catch(function(){});});});
+      return p.then(function(){S.daily.gameState=saved.s||'playing';});
+    }
+  }).then(function(){
+    /* Restore unlimited mode if there's a saved game */
+    var savedU=_lsu();
+    if(savedU&&savedU.g&&savedU.gameState!==undefined){
+      /* We need to reconstruct the target - but we only stored guess names
+         and game state, not the target name. To preserve the unlimited game
+         across reloads, derive target from the saved game state itself. */
+      /* Since we don't store the target name (for security), we'll just start
+         a fresh round when entering unlimited mode after a reload. */
+      /* For simplicity: clear stale unlimited save on reload */
+      _csu();
+    }
+  }).then(function(){
+    /* If user was in unlimited mode, start a fresh round */
+    if(S.mode==='unlimited'){
+      return _newRoundInit();
     }
   }).then(function(){
     $('loading').classList.add('hidden');
@@ -482,6 +761,26 @@ function _init(){
     _ra();
   }).catch(function(err){
     console.error('Init failed:',err);_sle(err);
+  });
+}
+
+/* Initial unlimited round setup - returns a promise so init can wait on it */
+function _newRoundInit(){
+  if(!S.names.length)return Promise.resolve();
+  var idx;
+  if(window.crypto&&crypto.getRandomValues){
+    var arr=new Uint32Array(1);crypto.getRandomValues(arr);
+    idx=arr[0]%S.names.length;
+  }else{
+    idx=Math.floor(Math.random()*S.names.length);
+  }
+  var targetName=S.names[idx];
+  S.unlimited={target:null,targetHash:null,guesses:[],gameState:'playing',seed:Date.now()+'-'+idx};
+  return _h(SALT+'::'+targetName).then(function(th){
+    S.unlimited.targetHash=th;
+    return _fp(targetName);
+  }).then(function(t){
+    S.unlimited.target=t;
   });
 }
 
